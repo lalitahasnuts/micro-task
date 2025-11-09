@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=dev-secret-key
+      - USERS_SERVICE_URL=http://users-service:3001
+      - ORDERS_SERVICE_URL=http://orders-service:3002
+    volumes:
+      - ./api-gateway/src:/app/src
+    command: npm run dev
+    depends_on:
+      - users-service
+      - orders-service
+    networks:
+      - app-network
+
+  users-service:
+    build: ./service-users
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=dev-secret-key
+    volumes:
+      - ./service-users/src:/app/src
+    command: npm run dev
+    networks:
+      - app-network
+
+  orders-service:
+    build: ./service-orders
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./service-orders/src:/app/src
+    command: npm run dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
