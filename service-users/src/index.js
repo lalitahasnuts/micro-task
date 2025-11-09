@@ -1,10 +1,10 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import pino from 'pino-http';
-import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
-import cors from 'cors';
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const pino = require('pino-http');
+const { z } = require('zod');
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -416,3 +416,20 @@ app.listen(PORT, () => {
   
   createAdminUser();
 });
+
+// Basic root route
+app.get('/', (req, res) => {
+    res.json({
+      service: 'users-service',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      endpoints: [
+        'POST /api/v1/register',
+        'POST /api/v1/login', 
+        'GET /api/v1/profile',
+        'PUT /api/v1/profile',
+        'GET /api/v1/users (admin only)',
+        'GET /health'
+      ]
+    });
+  });

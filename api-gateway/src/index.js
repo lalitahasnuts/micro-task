@@ -75,6 +75,29 @@ app.use((req, res, next) => {
   next();
 });
 
+// Basic root route - ДОБАВЬТЕ ЭТОТ МАРШРУТ
+app.get('/', (req, res) => {
+  res.json({
+    service: 'api-gateway',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: [
+      'POST /api/v1/users/auth/register',
+      'POST /api/v1/users/auth/login',
+      'GET /api/v1/users/profile',
+      'PUT /api/v1/users/profile',
+      'GET /api/v1/users (admin only)',
+      'POST /api/v1/orders',
+      'GET /api/v1/orders',
+      'GET /api/v1/orders/:id',
+      'PATCH /api/v1/orders/:id',
+      'DELETE /api/v1/orders/:id',
+      'GET /health'
+    ],
+    note: 'Use Authorization: Bearer <token> for protected routes'
+  });
+});
+
 // Proxy configuration
 const usersServiceProxy = createProxyMiddleware({
   target: process.env.USERS_SERVICE_URL || 'http://localhost:3001',

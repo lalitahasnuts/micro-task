@@ -1,8 +1,8 @@
-import express from 'express';
-import pino from 'pino-http';
-import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
-import cors from 'cors';
+const express = require('express');
+const pino = require('pino-http');
+const { z } = require('zod');
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -374,3 +374,20 @@ app.get('/api/v1/debug/requests', authenticate, (req, res) => {
 app.listen(PORT, () => {
   console.log(`📦 Orders service running on port ${PORT}`);
 });
+
+// Basic root route
+app.get('/', (req, res) => {
+    res.json({
+      service: 'orders-service',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      endpoints: [
+        'POST /api/v1/orders',
+        'GET /api/v1/orders',
+        'GET /api/v1/orders/:id',
+        'PATCH /api/v1/orders/:id',
+        'DELETE /api/v1/orders/:id',
+        'GET /health'
+      ]
+    });
+  });
