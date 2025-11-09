@@ -1,7 +1,7 @@
 {
     "name": "api-gateway",
     "version": "1.0.0",
-    "type": "module",
+    "type": "commonjs",
     "scripts": {
       "dev": "nodemon src/index.js",
       "start": "node src/index.js",
