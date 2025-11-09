@@ -1,0 +1,528 @@
+{
+    "info": {
+      "name": "Task Management System API",
+      "description": "Микросервисная система управления задачами - API тесты",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "userId",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "orderId",
+        "value": "",
+        "type": "string"
+      }
+    ],
+    "item": [
+      {
+        "name": "Health Checks",
+        "item": [
+          {
+            "name": "API Gateway Health",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/health",
+                "host": ["{{baseUrl}}"],
+                "path": ["health"]
+              }
+            }
+          },
+          {
+            "name": "Users Service Health",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "http://localhost:3001/health",
+                "host": ["http://localhost:3001"],
+                "path": ["health"]
+              }
+            }
+          },
+          {
+            "name": "Orders Service Health",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "http://localhost:3002/health",
+                "host": ["http://localhost:3002"],
+                "path": ["health"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Authentication",
+        "item": [
+          {
+            "name": "Register User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"Test User\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/auth/register",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "auth", "register"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 201\", function () {",
+                    "    pm.response.to.have.status(201);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has success true\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(true);",
+                    "});",
+                    "",
+                    "// Save user ID for future use",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.success && jsonData.data.user) {",
+                    "    pm.collectionVariables.set(\"userId\", jsonData.data.user.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Login Admin",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "auth", "login"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has token\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(true);",
+                    "    pm.expect(jsonData.data.token).to.be.a('string');",
+                    "});",
+                    "",
+                    "// Save token for authenticated requests",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.success && jsonData.data.token) {",
+                    "    pm.collectionVariables.set(\"token\", jsonData.data.token);",
+                    "    console.log(\"Token saved: \" + jsonData.data.token);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Login User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "auth", "login"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Users Management",
+        "item": [
+          {
+            "name": "Get Current Profile",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "profile"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 200\", function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
+                    "pm.test(\"Response has user data\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(true);",
+                    "    pm.expect(jsonData.data.user).to.be.an('object');",
+                    "    pm.expect(jsonData.data.user.email).to.be.a('string');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Update Profile",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Updated Name\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "profile"]
+              }
+            }
+          },
+          {
+            "name": "List Users (Admin Only)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users?page=1&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users"],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Orders Management",
+        "item": [
+          {
+            "name": "Create Order",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"items\": [\n    {\n      \"product\": \"Construction Materials\",\n      \"quantity\": 10,\n      \"price\": 150.50\n    },\n    {\n      \"product\": \"Tools\",\n      \"quantity\": 5,\n      \"price\": 75.25\n    }\n  ],\n  \"totalAmount\": 1876.25\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/orders",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "orders"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 201\", function () {",
+                    "    pm.response.to.have.status(201);",
+                    "});",
+                    "",
+                    "pm.test(\"Order created successfully\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(true);",
+                    "    pm.expect(jsonData.data.order).to.be.an('object');",
+                    "    pm.expect(jsonData.data.order.status).to.eql('created');",
+                    "});",
+                    "",
+                    "// Save order ID for future use",
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.success && jsonData.data.order) {",
+                    "    pm.collectionVariables.set(\"orderId\", jsonData.data.order.id);",
+                    "    console.log(\"Order ID saved: \" + jsonData.data.order.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Get Order by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "orders", "{{orderId}}"]
+              }
+            }
+          },
+          {
+            "name": "List Orders",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/orders?page=1&limit=10&sort=createdAt",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "orders"],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1"
+                  },
+                  {
+                    "key": "limit",
+                    "value": "10"
+                  },
+                  {
+                    "key": "sort",
+                    "value": "createdAt"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "Update Order Status",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"in_progress\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "orders", "{{orderId}}"]
+              }
+            }
+          },
+          {
+            "name": "Cancel Order",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "orders", "{{orderId}}"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Error Scenarios",
+        "item": [
+          {
+            "name": "Access Protected Route Without Token",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "profile"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 401\", function () {",
+                    "    pm.response.to.have.status(401);",
+                    "});",
+                    "",
+                    "pm.test(\"Error response format\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(false);",
+                    "    pm.expect(jsonData.error.code).to.eql('UNAUTHORIZED');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Duplicate Registration",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"Admin User\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/api/v1/users/auth/register",
+                "host": ["{{baseUrl}}"],
+                "path": ["api", "v1", "users", "auth", "register"]
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test(\"Status code is 400\", function () {",
+                    "    pm.response.to.have.status(400);",
+                    "});",
+                    "",
+                    "pm.test(\"Duplicate user error\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData.success).to.eql(false);",
+                    "    pm.expect(jsonData.error.code).to.eql('USER_EXISTS');",
+                    "});"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "console.log('Base URL:', pm.collectionVariables.get('baseUrl'));"
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "console.log('Response status:', pm.response.code);",
+            "console.log('Response time:', pm.response.responseTime + 'ms');"
+          ]
+        }
+      }
+    ]
+  }

@@ -3,6 +3,7 @@ const pino = require('pino-http');
 const { z } = require('zod');
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -67,31 +68,51 @@ const updateOrderSchema = z.object({
 
 // Authentication middleware
 const authenticate = (req, res, next) => {
-  const userId = req.headers['x-user-id'];
-  const userRole = req.headers['x-user-role'];
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Bearer token required'
+        }
+      });
+    }
   
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required'
-      }
-    });
-  }
+    const token = authHeader.replace('Bearer ', '');
   
-  req.user = { id: userId, role: userRole };
-  next();
-};
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'my-key');
+      
+      // Используем те же поля, что и в User Service
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+        roles: decoded.roles
+      };
+      
+      next();
+    } catch (error) {
+      console.log('JWT Error:', error.message);
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or expired token'
+        }
+      });
+    }
+  };
 
 // Authorization helpers
-const canViewOrder = (order, userId, userRole) => {
-  return order.userId === userId || userRole === 'admin';
-};
-
-const canUpdateOrder = (order, userId, userRole) => {
-  return order.userId === userId || userRole === 'admin';
-};
+const canViewOrder = (order, userId, userRoles) => {
+    return order.userId === userId || userRoles.includes('admin');
+  };
+  
+  const canUpdateOrder = (order, userId, userRoles) => {
+    return order.userId === userId || userRoles.includes('admin');
+  };
 
 // Routes
 // Create order

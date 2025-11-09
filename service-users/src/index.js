@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'my-key';
 
 // In-memory storage (in production use database)
 let users = [];
@@ -64,33 +64,46 @@ const updateProfileSchema = z.object({
 
 // Authentication middleware
 const authenticate = (req, res, next) => {
-  const userId = req.headers['x-user-id'];
-  const userRole = req.headers['x-user-role'];
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Bearer token required'
+        }
+      });
+    }
   
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required'
+    const token = authHeader.replace('Bearer ', '');
+  
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      const user = users.find(u => u.id === decoded.userId);
+      
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND', 
+            message: 'User not found'
+          }
+        });
       }
-    });
-  }
-  
-  const user = users.find(u => u.id === userId);
-  if (!user) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'USER_NOT_FOUND',
-        message: 'User not found'
-      }
-    });
-  }
-  
-  req.user = user;
-  next();
-};
+      
+      req.user = user;
+      next();
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or expired token'
+        }
+      });
+    }
+  };
 
 const requireAdmin = (req, res, next) => {
   if (!req.user.roles.includes('admin')) {
@@ -124,7 +137,7 @@ app.post('/api/v1/register', async (req, res) => {
     }
     
     // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
+    const hashedPassword = await bcrypt.hash(validatedData.password, 8);
     
     // Create user
     const user = {
